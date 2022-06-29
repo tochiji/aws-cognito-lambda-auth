@@ -101,7 +101,7 @@ Resources:
   createUserFunction:
     Type: AWS::Serverless::Function
     Properties:
-      Handler: src/handlers/create-user.createUserHandler
+      Handler: src/handlers/create-user.handler
       Runtime: nodejs16.x
       Architectures:
         - arm64
@@ -119,6 +119,49 @@ Resources:
           Type: Api
           Properties:
             Path: /user
+            Method: POST
+
+  confirmSignUpFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/confirm-signup.handler
+      Runtime: nodejs16.x
+      Architectures:
+        - arm64
+      MemorySize: 128
+      Timeout: 100
+      Description: Cognitoに新規登録したユーザーに送られるConfirmation Codeを検証します
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref SampleTable
+      Environment:
+        Variables:
+          CLIENT_ID: !Ref CognitoUserPoolClient
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /confirm-signup
+            Method: POST
+
+  resendConfirmationCodeFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/resend-confirmation-code.handler
+      Runtime: nodejs16.x
+      Architectures:
+        - arm64
+      MemorySize: 128
+      Timeout: 100
+      Description: Confirmation Codeを再送します
+      Environment:
+        Variables:
+          CLIENT_ID: !Ref CognitoUserPoolClient
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /resend-confirmation-code
             Method: POST
 
   # Simple syntax to create a DynamoDB table with a single attribute primary key, more in

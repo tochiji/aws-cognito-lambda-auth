@@ -25,30 +25,29 @@ exports.handler = async (event) => {
 
   const body = JSON.parse(event.body);
   const email = body.email;
-  const password = body.password;
+  const confirmCode = body.confirmCode;
 
   const params = {
     ClientId: clientId, // アプリケーションクライアントのID
     Username: email, // template.yamlより、「UsernameAttributes」は「email」を指定。
-    Password: password, // template.yamlより、PasswordPolicyにてパスワードの複雑性を指定。
-    UserAttributes: [{ Name: "email", Value: email }],
+    ConfirmationCode: confirmCode,
   };
 
   const result = await cognito
-    .signUp(params)
+    .confirmSignUp(params)
     .promise()
     .catch((error) => {
       //
       // ここでcatchされるerrorの例
       //
       // error = {
-      //   "code": "InvalidPasswordException",
-      //   "message": "Password did not conform with policy: Password not long enough",
-      //   "requestId": "07c7eafe-bff7-4777-bc51-a8d4acc8c0dc",
-      //   "retryDelay": 38.45781588499835,
-      //   "retryable": false,
-      //   "statusCode": 400,
-      //   "time": "2022-06-27T17:13:05.930Z"
+      //   code: 'CodeMismatchException',
+      //   message: "CodeMismatchException: Invalid verification code provided, please try again."
+      //   time: 2022-06-29T16:39:58.711Z,
+      //   requestId: 'ad8cf9e6-1d65-4551-9df6-e4c532e9aa1e',
+      //   statusCode: 400,
+      //   retryable: false,
+      //   retryDelay: 66.79188286087705
       // }
       //
       console.log("ERROR\n", error);
@@ -63,23 +62,27 @@ exports.handler = async (event) => {
   //
   // 成功時のbodyの中身例
   //
-  // {
-  //   "CodeDeliveryDetails": {
-  //       "AttributeName": "email",
-  //       "DeliveryMedium": "EMAIL",
-  //       "Destination": "p***@g***"
-  //   },
-  //   "UserConfirmed": false,
-  //   "UserSub": "b2377463-32a0-408b-bcff-9fea229d5990"
-  // }
+  // {}
   //
   //
   // error時のbodyの中身例
   //
   // {
-  //   "error": "true",
-  //   "code": "UsernameExistsException",
-  //   "message": "An account with the given email already exists."
+  //     "code": "MissingRequiredParameter",
+  //     "error": true,
+  //     "message": "Missing required key 'ConfirmationCode' in params"
+  // }
+  //
+  // {
+  //     "code": "CodeMismatchException",
+  //     "error": true,
+  //     "message": "Invalid verification code provided, please try again."
+  // }
+  //
+  // {
+  //     "code": "NotAuthorizedException",
+  //     "error": true,
+  //     "message": "User cannot be confirmed. Current status is CONFIRMED"
   // }
   //
 

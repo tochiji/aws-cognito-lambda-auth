@@ -25,30 +25,27 @@ exports.handler = async (event) => {
 
   const body = JSON.parse(event.body);
   const email = body.email;
-  const password = body.password;
 
   const params = {
     ClientId: clientId, // アプリケーションクライアントのID
     Username: email, // template.yamlより、「UsernameAttributes」は「email」を指定。
-    Password: password, // template.yamlより、PasswordPolicyにてパスワードの複雑性を指定。
-    UserAttributes: [{ Name: "email", Value: email }],
   };
 
   const result = await cognito
-    .signUp(params)
+    .resendConfirmationCode(params)
     .promise()
     .catch((error) => {
       //
       // ここでcatchされるerrorの例
       //
       // error = {
-      //   "code": "InvalidPasswordException",
-      //   "message": "Password did not conform with policy: Password not long enough",
-      //   "requestId": "07c7eafe-bff7-4777-bc51-a8d4acc8c0dc",
-      //   "retryDelay": 38.45781588499835,
-      //   "retryable": false,
-      //   "statusCode": 400,
-      //   "time": "2022-06-27T17:13:05.930Z"
+      //   code: 'InvalidParameterException',
+      //   message: 'InvalidParameterException: User is already confirmed.'
+      //   time: 2022-06-29T17:23:26.970Z,
+      //   requestId: '0daea9a5-b55e-41d8-aa9c-02352abc617b',
+      //   statusCode: 400,
+      //   retryable: false,
+      //   retryDelay: 41.14133366071404
       // }
       //
       console.log("ERROR\n", error);
@@ -61,25 +58,23 @@ exports.handler = async (event) => {
     });
 
   //
-  // 成功時のbodyの中身例
+  // 成功時のresultの中身例
   //
-  // {
-  //   "CodeDeliveryDetails": {
-  //       "AttributeName": "email",
-  //       "DeliveryMedium": "EMAIL",
-  //       "Destination": "p***@g***"
-  //   },
-  //   "UserConfirmed": false,
-  //   "UserSub": "b2377463-32a0-408b-bcff-9fea229d5990"
+  // result = {
+  //     "CodeDeliveryDetails": {
+  //         "AttributeName": "email",
+  //         "DeliveryMedium": "EMAIL",
+  //         "Destination": "p***@g***"
+  //     }
   // }
   //
   //
   // error時のbodyの中身例
   //
-  // {
-  //   "error": "true",
-  //   "code": "UsernameExistsException",
-  //   "message": "An account with the given email already exists."
+  // result = {
+  //     "code": "InvalidParameterException",
+  //     "error": true,
+  //     "message": "User is already confirmed."
   // }
   //
 
