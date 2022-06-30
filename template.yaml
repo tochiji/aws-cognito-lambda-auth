@@ -164,6 +164,26 @@ Resources:
             Path: /resend-confirmation-code
             Method: POST
 
+  initiateAuthFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/initiate-auth.handler
+      Runtime: nodejs16.x
+      Architectures:
+        - arm64
+      MemorySize: 128
+      Timeout: 100
+      Description: Emailとパスワードでユーザーを認証します
+      Environment:
+        Variables:
+          CLIENT_ID: !Ref CognitoUserPoolClient
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /initiate-auth
+            Method: POST
+
   # Simple syntax to create a DynamoDB table with a single attribute primary key, more in
   # https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlesssimpletable
 
