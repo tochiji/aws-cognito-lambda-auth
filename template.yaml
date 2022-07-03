@@ -12,6 +12,16 @@ Globals:
 # Resources declares the AWS resources that you want to include in the stack
 # https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/resources-section-structure.html
 Resources:
+  ApiGateway:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      Auth:
+        DefaultAuthorizer: CognitoAuthorizer
+        Authorizers:
+          CognitoAuthorizer:
+            UserPoolArn: !GetAtt CognitoUserPool.Arn
+
   # Each Lambda function is defined by properties:
   # https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
 
@@ -40,6 +50,8 @@ Resources:
           Properties:
             Path: /
             Method: GET
+            RestApiId: !Ref ApiGateway
+
   # Each Lambda function is defined by properties:
   # https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
 
@@ -68,35 +80,37 @@ Resources:
           Properties:
             Path: /{id}
             Method: GET
+            RestApiId: !Ref ApiGateway
 
   # Each Lambda function is defined by properties:
   # https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
 
   # This is a Lambda function config associated with the source code: put-item.js
-  # putItemFunction:
-  #   Type: AWS::Serverless::Function
-  #   Properties:
-  #     Handler: src/handlers/put-item.putItemHandler
-  #     Runtime: nodejs16.x
-  #     Architectures:
-  #       - arm64
-  #     MemorySize: 128
-  #     Timeout: 100
-  #     Description: A simple example includes a HTTP post method to add one item to a DynamoDB table.
-  #     Policies:
-  #       # Give Create/Read/Update/Delete Permissions to the SampleTable
-  #       - DynamoDBCrudPolicy:
-  #           TableName: !Ref SampleTable
-  #     Environment:
-  #       Variables:
-  #         # Make table name accessible as environment variable from function code during execution
-  #         SAMPLE_TABLE: !Ref SampleTable
-  #     Events:
-  #       Api:
-  #         Type: Api
-  #         Properties:
-  #           Path: /
-  #           Method: POST
+  putItemFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/put-item.putItemHandler
+      Runtime: nodejs16.x
+      Architectures:
+        - arm64
+      MemorySize: 128
+      Timeout: 100
+      Description: A simple example includes a HTTP post method to add one item to a DynamoDB table.
+      Policies:
+        # Give Create/Read/Update/Delete Permissions to the SampleTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref SampleTable
+      Environment:
+        Variables:
+          # Make table name accessible as environment variable from function code during execution
+          SAMPLE_TABLE: !Ref SampleTable
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /
+            Method: POST
+            RestApiId: !Ref ApiGateway
 
   createUserFunction:
     Type: AWS::Serverless::Function
@@ -118,8 +132,11 @@ Resources:
         Api:
           Type: Api
           Properties:
-            Path: /user
+            Path: /auth/create-user
             Method: POST
+            RestApiId: !Ref ApiGateway
+            Auth:
+              Authorizer: NONE
 
   confirmSignUpFunction:
     Type: AWS::Serverless::Function
@@ -141,8 +158,11 @@ Resources:
         Api:
           Type: Api
           Properties:
-            Path: /confirm-signup
+            Path: /auth/confirm-signup
             Method: POST
+            RestApiId: !Ref ApiGateway
+            Auth:
+              Authorizer: NONE
 
   resendConfirmationCodeFunction:
     Type: AWS::Serverless::Function
@@ -161,8 +181,11 @@ Resources:
         Api:
           Type: Api
           Properties:
-            Path: /resend-confirmation-code
+            Path: /auth/resend-confirmation-code
             Method: POST
+            RestApiId: !Ref ApiGateway
+            Auth:
+              Authorizer: NONE
 
   initiateAuthFunction:
     Type: AWS::Serverless::Function
@@ -181,8 +204,35 @@ Resources:
         Api:
           Type: Api
           Properties:
-            Path: /initiate-auth
+            Path: /auth/initiate-auth
             Method: POST
+            RestApiId: !Ref ApiGateway
+            Auth:
+              Authorizer: NONE
+
+  verifyIdTokenFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/verify-id-token.handler
+      Runtime: nodejs16.x
+      Architectures:
+        - arm64
+      MemorySize: 128
+      Timeout: 100
+      Description: IDトークンを検証します
+      Environment:
+        Variables:
+          USERPOOL_ID: !Ref CognitoUserPool
+          CLIENT_ID: !Ref CognitoUserPoolClient
+      Events:
+        Api:
+          Type: Api
+          Properties:
+            Path: /auth/verify-id-token
+            Method: POST
+            RestApiId: !Ref ApiGateway
+            Auth:
+              Authorizer: NONE
 
   # Simple syntax to create a DynamoDB table with a single attribute primary key, more in
   # https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlesssimpletable
@@ -233,6 +283,7 @@ Resources:
       UserPoolId: !Ref CognitoUserPool
       ClientName: sam-cognito-userpool-client
       GenerateSecret: false
+      PreventUserExistenceErrors: ENABLED
       ExplicitAuthFlows:
         - ALLOW_USER_PASSWORD_AUTH
         - ALLOW_REFRESH_TOKEN_AUTH
@@ -240,4 +291,4 @@ Resources:
 Outputs:
   WebEndpoint:
     Description: "API Gateway endpoint URL for Prod stage"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
+    Value: !Sub "https://${ApiGateway}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
