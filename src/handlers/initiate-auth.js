@@ -82,7 +82,6 @@ exports.handler = async (event) => {
     statusCode: 200,
     headers: {
       "Content-Type": "application/json; charset=utf-8",
-      "Set-Cookie": `IdToken=${IdToken}; Max-Age=${ExpiresIn}`,
     },
     body: JSON.stringify({
       IdToken,
