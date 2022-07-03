@@ -21,11 +21,12 @@ $ sam deploy
 ------------------------------------------------------------------------
 CloudFormation outputs from deployed stack
 ------------------------------------------------------------------------
-Outputs                                                                                                            
+Outputs
 ------------------------------------------------------------------------
-Key                 WebEndpoint                                                                                    
-Description         API Gateway endpoint URL for Prod stage                                                        
-Value               https://XXXXXXXXXXX.execute-api.ap-northeast-1.amazonaws.com/Prod/                              
+Key                 WebEndpoint
+Description         API Gateway endpoint URL for Prod
+stage
+Value               https://XXXXXXXXXXX.execute-api.ap-northeast-1.amazonaws.com/Prod/
 ------------------------------------------------------------------------
 
 Successfully created/updated stack - aws-cognito-lambda-auth-app in ap-northeast-1
@@ -143,7 +144,7 @@ x-amzn-RequestId: fa367f4a-4b19-45ab-bd23-f1d2a017dd45
 
 #### TOKENが存在しない場合
 ```bash
- $ http $URL       
+ $ http $URL
 
 HTTP/1.1 401 Unauthorized
 Connection: keep-alive
@@ -189,7 +190,7 @@ x-amzn-RequestId: 139ec809-9563-4082-8a0e-262b3a070ae7
 
 ### 6. キーを指定してDynamoDBからデータを取得
 ```bash
-$ http $URL/well-known Authorization:$TOKEN  
+$ http $URL/well-known Authorization:$TOKEN
 
 HTTP/1.1 200 OK
 Connection: keep-alive
