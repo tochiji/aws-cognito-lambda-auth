@@ -36,7 +36,7 @@ Successfully created/updated stack - aws-cognito-lambda-auth-app in ap-northeast
 
 この後の例は `export URL=https://XXXXXX...` とエンドポイントを環境変数に格納してから実行してください。
 
-## 実行
+## 認証周りの実行
 
 ### 1. ユーザーの追加(create-user)
 ```bash
@@ -114,7 +114,42 @@ x-amzn-RequestId: e3c931c9-d0c3-44a0-b378-c9638008279c
 
 この後の例では、`export TOKEN="eyJra...` とIdTokenを環境変数に格納してから実行してください。
 
-### 4. DynamoDBのデータを取得
+### 4. IdTokenの検証
+```bash
+ $ http https://pvvsytwlpa.execute-api.ap-northeast-1.amazonaws.com/Prod/auth/verify-id-token idToken="eyJra..."
+HTTP/1.1 200 OK
+Connection: keep-alive
+Content-Length: 499
+Content-Type: application/json
+Date: Mon, 11 Jul 2022 15:52:21 GMT
+Via: 1.1 9f33503b283951bb0144294de8e3cc76.cloudfront.net (CloudFront)
+X-Amz-Cf-Id: y1ibkQbIJdltFWUu4R7HK3UcPBtoAqOYdT1C7bVtNg2ds7tDhh8w1w==
+X-Amz-Cf-Pop: NRT57-C3
+X-Amzn-Trace-Id: Root=1-62cc4734-2e8448237562d2d94472669a;Sampled=0
+X-Cache: Miss from cloudfront
+x-amz-apigw-id: VHAQPHqYtjMF9Ww=
+x-amzn-RequestId: fdd80024-08f6-436e-b1e0-c15590836fbf
+
+{
+    "aud": "1ebxxxxxxxxxxxxxxxxxxx", # アプリケーションクライアントID
+    "auth_time": 1657554704,
+    "cognito:username": "15fc61dd-d919-4188-bd78-e8ce89021e76",
+    "email": "XXXXXXXXXXXXX@XXXXX.XXX",
+    "email_verified": true,
+    "event_id": "d400d70e-9e7a-4171-a5d9-e3b1d2180938",
+    "exp": 1657558304,
+    "iat": 1657554704,
+    "iss": "https://cognito-idp.ap-northeast-1.amazonaws.com/ap-northeast-1_XXXXXXXX",
+    "jti": "9a5ba17c-4ac7-433f-bf16-1e81cef6949f",
+    "origin_jti": "7183605d-4323-45bb-b4fa-48463c0abda7",
+    "sub": "15fc61dd-d919-4188-bd78-e8ce89021e76",
+    "token_use": "id"
+}
+```
+
+## DynamoDBへのアクセス
+
+### 1. DynamoDBのデータを取得
 ここからは、`Header`として`Authorization:$TOKEN` を指定してください。
 
 #### TOKENが存在する場合
@@ -165,7 +200,7 @@ x-amzn-RequestId: 6ec67ef2-3fef-4acc-b249-6053a7a1ff24
 
 ```
 
-### 5. DynamoDBにデータを追加
+### 2. DynamoDBにデータを追加
 ```bash
 $ http $URL Authorization:$TOKEN id="well-known" name="Kirin Kawachima"
 
@@ -188,7 +223,7 @@ x-amzn-RequestId: 139ec809-9563-4082-8a0e-262b3a070ae7
 }
 ```
 
-### 6. キーを指定してDynamoDBからデータを取得
+### 3. キーを指定してDynamoDBからデータを取得
 ```bash
 $ http $URL/well-known Authorization:$TOKEN
 
